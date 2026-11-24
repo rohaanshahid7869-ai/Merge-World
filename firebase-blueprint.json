@@ -1,0 +1,109 @@
+{
+  "entities": {
+    "LeaderboardPlayer": {
+      "title": "LeaderboardPlayer",
+      "description": "Public Merge World player profile, earned milestone badges, and progression statistics for the Global Top 40 Leaderboard.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the player."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Player-chosen public display name.",
+          "minLength": 2,
+          "maxLength": 24
+        },
+        "avatarId": {
+          "type": "string",
+          "description": "Selected sanctuary avatar identifier.",
+          "enum": ["sprout", "fox", "daisy", "crown", "crystal", "phoenix", "comet", "atlas"]
+        },
+        "title": {
+          "type": "string",
+          "description": "Player-selected sanctuary title.",
+          "minLength": 2,
+          "maxLength": 32
+        },
+        "bio": {
+          "type": "string",
+          "description": "Optional short player motto.",
+          "maxLength": 80
+        },
+        "coinBadges": {
+          "type": "array",
+          "description": "Unlocked 100k+ coin milestone badge IDs."
+        },
+        "streakBadges": {
+          "type": "array",
+          "description": "Unlocked daily streak milestone numbers (7, 30, 100)."
+        },
+        "currentCoins": {
+          "type": "integer",
+          "description": "Player's current coin balance."
+        },
+        "totalCoinsEarned": {
+          "type": "integer",
+          "description": "Cumulative lifetime coins earned."
+        },
+        "peakCoins": {
+          "type": "integer",
+          "description": "Highest coin milestone metric (max of current or lifetime earned coins)."
+        },
+        "totalMerges": {
+          "type": "integer",
+          "description": "Total merges completed by the player."
+        },
+        "playerLevel": {
+          "type": "integer",
+          "description": "Current player XP level."
+        },
+        "discoveredCount": {
+          "type": "integer",
+          "description": "Number of unique album wonders discovered (out of 32)."
+        },
+        "unlockedAreasCount": {
+          "type": "integer",
+          "description": "Number of unlocked sanctuary realms (out of 5)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when leaderboard entry was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when leaderboard entry was last synced."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "avatarId",
+        "title",
+        "bio",
+        "coinBadges",
+        "streakBadges",
+        "currentCoins",
+        "totalCoinsEarned",
+        "peakCoins",
+        "totalMerges",
+        "playerLevel",
+        "discoveredCount",
+        "unlockedAreasCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/leaderboard/{playerId}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardPlayer"
+      },
+      "description": "Global Top 40 leaderboard entries keyed by authenticated player UID (contains no PII)."
+    }
+  }
+}

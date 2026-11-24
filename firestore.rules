@@ -1,0 +1,167 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: deny all reads and writes by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(playerId) {
+      return isSignedIn() && request.auth.uid == playerId;
+    }
+
+    function isValidAvatar(avatarId) {
+      return avatarId is string && avatarId in [
+        'sprout',
+        'fox',
+        'daisy',
+        'crown',
+        'crystal',
+        'phoenix',
+        'comet',
+        'atlas'
+      ];
+    }
+
+    function isValidLeaderboardPlayer(data) {
+      let allKeys = [
+        'uid',
+        'displayName',
+        'avatarId',
+        'title',
+        'bio',
+        'coinBadges',
+        'streakBadges',
+        'currentCoins',
+        'totalCoinsEarned',
+        'peakCoins',
+        'totalMerges',
+        'playerLevel',
+        'discoveredCount',
+        'unlockedAreasCount',
+        'createdAt',
+        'updatedAt'
+      ];
+
+      return data.keys().hasAll(allKeys)
+        && data.keys().hasOnly(allKeys)
+        && data.uid is string
+        && isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.displayName is string
+        && data.displayName.size() >= 2
+        && data.displayName.size() <= 24
+        && isValidAvatar(data.avatarId)
+        && data.title is string
+        && data.title.size() >= 2
+        && data.title.size() <= 32
+        && data.bio is string
+        && data.bio.size() <= 80
+        && data.coinBadges is list
+        && data.coinBadges.size() <= 4
+        && (data.coinBadges.size() == 0 || data.coinBadges[0] is string)
+        && data.coinBadges.hasOnly(['coin_100k', 'coin_250k', 'coin_1m', 'coin_5m'])
+        && data.streakBadges is list
+        && data.streakBadges.size() <= 3
+        && (data.streakBadges.size() == 0 || data.streakBadges[0] is int)
+        && data.streakBadges.hasOnly([7, 30, 100])
+        && data.currentCoins is int
+        && data.currentCoins >= 0
+        && data.currentCoins <= 1000000000
+        && data.totalCoinsEarned is int
+        && data.totalCoinsEarned >= 0
+        && data.totalCoinsEarned <= 1000000000
+        && data.peakCoins is int
+        && data.peakCoins >= 0
+        && data.peakCoins <= 1000000000
+        && data.totalMerges is int
+        && data.totalMerges >= 0
+        && data.totalMerges <= 10000000
+        && data.playerLevel is int
+        && data.playerLevel >= 1
+        && data.playerLevel <= 999
+        && data.discoveredCount is int
+        && data.discoveredCount >= 1
+        && data.discoveredCount <= 32
+        && data.unlockedAreasCount is int
+        && data.unlockedAreasCount >= 1
+        && data.unlockedAreasCount <= 5
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Public game showcase & Global Top 40 Leaderboard (no PII stored)
+    match /leaderboard/{playerId} {
+      allow get: if isValidId(playerId);
+      allow list: if request.query.limit != null && request.query.limit > 0 && request.query.limit <= 40;
+
+      allow create: if isVerifiedUser()
+        && isValidId(playerId)
+        && isOwner(playerId)
+        && isValidLeaderboardPlayer(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidId(playerId)
+        && isOwner(playerId)
+        && isValidLeaderboardPlayer(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Edit public profile details only
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName',
+            'avatarId',
+            'title',
+            'bio',
+            'updatedAt'
+          ])
+          ||
+          // Action: Sync progression stats, badges, and profile together
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName',
+            'avatarId',
+            'title',
+            'bio',
+            'coinBadges',
+            'streakBadges',
+            'currentCoins',
+            'totalCoinsEarned',
+            'peakCoins',
+            'totalMerges',
+            'playerLevel',
+            'discoveredCount',
+            'unlockedAreasCount',
+            'updatedAt'
+          ])
+        );
+
+      allow delete: if isVerifiedUser()
+        && isValidId(playerId)
+        && isOwner(playerId);
+    }
+  }
+}

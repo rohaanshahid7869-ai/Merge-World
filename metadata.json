@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix Merge World",
+  "description": "A vibrant cross-platform 2D merge adventure game with 22 item levels, unlockable realms, shop, missions, and collection album.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
