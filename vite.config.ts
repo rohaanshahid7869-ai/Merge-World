@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: '/Remix-Merge-World/',
+    base: '/Merge-World/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
