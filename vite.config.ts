@@ -4,7 +4,8 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
-  return {base: '/Remix-Merge-World/',
+  return {
+    base: '/Remix-Merge-World/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
